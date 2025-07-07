@@ -1,0 +1,213 @@
+{% extends "admin_base.html" %}
+
+{% block title %}Applications - Admin Panel{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1>All Applications</h1>
+            <a href="{{ url_for('admin_panel') }}" class="btn btn-secondary">Back to Admin</a>
+        </div>
+        
+        <!-- Search and Filter Bar -->
+        <div class="card mb-4">
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-3">
+                        <div class="input-group">
+                            <input type="text" class="form-control" id="searchInput" placeholder="Search by name, email...">
+                            <button class="btn btn-primary" onclick="filterApplications()"><i class="fas fa-search"></i></button>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <select class="form-select" id="companyFilter" onchange="filterApplications()">
+                            <option value="">All Companies</option>
+                            {% set companies = [] %}
+                            {% for application in applications %}
+                                {% if application.job.company not in companies %}
+                                    {% set _ = companies.append(application.job.company) %}
+                                    <option value="{{ application.job.company }}">{{ application.job.company }}</option>
+                                {% endif %}
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <select class="form-select" id="dateFilter" onchange="filterApplications()">
+                            <option value="">All Dates</option>
+                            <option value="today">Today</option>
+                            <option value="week">This Week</option>
+                            <option value="month">This Month</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <button class="btn btn-outline-secondary w-100" onclick="clearFilters()"><i class="fas fa-times me-1"></i>Clear Filters</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-body">
+                {% if applications %}
+                    <div class="table-responsive">
+                        <table class="table table-striped" id="applicationsTable">
+                            <thead>
+                                <tr>
+                                    <th>Applicant</th>
+                                    <th>Job Title</th>
+                                    <th>Company</th>
+                                    <th>Email</th>
+                                    <th>Phone</th>
+                                    <th>Applied Date</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for application in applications %}
+                                <tr data-company="{{ application.job.company }}" data-date="{{ application.applied_at.strftime('%Y-%m-%d') }}">
+                                    <td>{{ application.name }}</td>
+                                    <td>{{ application.job.title }}</td>
+                                    <td>{{ application.job.company }}</td>
+                                    <td>{{ application.email }}</td>
+                                    <td>{{ application.phone }}</td>
+                                    <td>{{ application.applied_at.strftime('%b %d, %Y') }}</td>
+                                    <td>
+                                        <button class="btn btn-sm btn-outline-info" data-bs-toggle="modal" data-bs-target="#applicationModal" onclick="showApplicationDetails('{{ application.name }}', '{{ application.email }}', '{{ application.phone }}', '{{ application.job.title }}', '{{ application.job.company }}', '{{ application.applied_at.strftime('%b %d, %Y at %I:%M %p') }}', '{{ application.resume or '' }}')">
+                                            View Details
+                                        </button>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <p class="text-muted">No applications received yet.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Application Details Modal -->
+<div class="modal fade" id="applicationModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Application Details</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="applicationDetails">
+                <!-- Application details will be loaded here -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function showApplicationDetails(name, email, phone, jobTitle, company, appliedDate, resume) {
+    const resumeSection = resume ? `<p><strong>Resume:</strong> <a href="${resume}" target="_blank" class="btn btn-sm btn-primary"><i class="fas fa-download me-1"></i>View Resume</a></p>` : '<p><strong>Resume:</strong> Not provided</p>';
+    
+    document.getElementById('applicationDetails').innerHTML = `
+        <div class="row">
+            <div class="col-12">
+                <div class="card mb-3">
+                    <div class="card-header">
+                        <h6 class="mb-0"><i class="fas fa-user me-2"></i>Candidate Information</h6>
+                    </div>
+                    <div class="card-body">
+                        <p><strong>Name:</strong> ${name}</p>
+                        <p><strong>Email:</strong> ${email}</p>
+                        <p><strong>Mobile:</strong> ${phone}</p>
+                        ${resumeSection}
+                    </div>
+                </div>
+                
+                <div class="card mb-3">
+                    <div class="card-header">
+                        <h6 class="mb-0"><i class="fas fa-briefcase me-2"></i>Job Applied For</h6>
+                    </div>
+                    <div class="card-body">
+                        <p><strong>Position:</strong> ${jobTitle}</p>
+                        <p><strong>Company:</strong> ${company}</p>
+                    </div>
+                </div>
+                
+                <div class="card">
+                    <div class="card-header">
+                        <h6 class="mb-0"><i class="fas fa-clock me-2"></i>Application Details</h6>
+                    </div>
+                    <div class="card-body">
+                        <p><strong>Applied on:</strong> ${appliedDate}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+function filterApplications() {
+    const searchInput = document.getElementById('searchInput').value.toLowerCase();
+    const companyFilter = document.getElementById('companyFilter').value;
+    const dateFilter = document.getElementById('dateFilter').value;
+    const table = document.getElementById('applicationsTable');
+    const rows = table.getElementsByTagName('tr');
+    
+    for (let i = 1; i < rows.length; i++) {
+        const row = rows[i];
+        const name = row.cells[0].textContent.toLowerCase();
+        const jobTitle = row.cells[1].textContent.toLowerCase();
+        const company = row.cells[2].textContent;
+        const email = row.cells[3].textContent.toLowerCase();
+        const dateStr = row.getAttribute('data-date');
+        
+        let showRow = true;
+        
+        // Search filter
+        if (searchInput && !name.includes(searchInput) && !jobTitle.includes(searchInput) && !email.includes(searchInput)) {
+            showRow = false;
+        }
+        
+        // Company filter
+        if (companyFilter && company !== companyFilter) {
+            showRow = false;
+        }
+        
+        // Date filter
+        if (dateFilter && dateStr) {
+            const rowDate = new Date(dateStr);
+            const today = new Date();
+            const weekAgo = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
+            const monthAgo = new Date(today.getTime() - 30 * 24 * 60 * 60 * 1000);
+            
+            if (dateFilter === 'today' && rowDate.toDateString() !== today.toDateString()) {
+                showRow = false;
+            } else if (dateFilter === 'week' && rowDate < weekAgo) {
+                showRow = false;
+            } else if (dateFilter === 'month' && rowDate < monthAgo) {
+                showRow = false;
+            }
+        }
+        
+        row.style.display = showRow ? '' : 'none';
+    }
+}
+
+function clearFilters() {
+    document.getElementById('searchInput').value = '';
+    document.getElementById('companyFilter').selectedIndex = 0;
+    document.getElementById('dateFilter').selectedIndex = 0;
+    
+    // Show all rows
+    const table = document.getElementById('applicationsTable');
+    const rows = table.getElementsByTagName('tr');
+    for (let i = 1; i < rows.length; i++) {
+        rows[i].style.display = '';
+    }
+}
+</script>
+{% endblock %}

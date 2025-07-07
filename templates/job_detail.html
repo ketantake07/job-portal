@@ -1,0 +1,200 @@
+{% extends "base.html" %}
+
+{% block title %}{{ job.title }} - {{ job.company }}{% endblock %}
+
+{% block content %}
+<div class="container job-detail-mobile">
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card job-detail-card">
+                <div class="job-header">
+                    {% if job.image_url %}
+                    <img src="{{ job.image_url }}" alt="{{ job.company }}" class="mb-3 rounded" style="max-height: 100px; object-fit: cover;" loading="lazy">
+                    {% endif %}
+                    <h1>{{ job.title }}</h1>
+                    <h4><i class="fas fa-building me-2"></i>{{ job.company }}</h4>
+                    <div class="mt-3">
+                        <span class="badge badge-category me-2">
+                            <i class="fas fa-tag me-1"></i>{{ job.category.title() }}
+                        </span>
+                        {% if job.location %}
+                            <span class="badge badge-location me-2">
+                                <i class="fas fa-map-marker-alt me-1"></i>{{ job.location }}
+                            </span>
+                        {% endif %}
+                        {% if job.salary %}
+                            <span class="badge badge-salary me-2">
+                                ₹{{ job.salary }}
+                            </span>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <div class="job-content">
+                    <!-- Mobile Single Column Layout -->
+                    <div class="d-lg-none mobile-job-content">
+                        <div class="job-section">
+                            <h5><i class="fas fa-file-alt me-2"></i>Job Description</h5>
+                            <div class="job-description">
+                                {{ job.description | replace('\n', '<br>') | safe }}
+                            </div>
+                        </div>
+
+                        <div class="job-section">
+                            <h5><i class="fas fa-cogs me-2"></i>Required Skills & Qualifications</h5>
+                            <div class="skills-list">
+                                {% set skills_lines = job.skills.split('\n') %}
+                                <ul class="list-unstyled">
+                                    {% for skill in skills_lines %}
+                                        {% if skill.strip() %}
+                                            <li class="mb-2">
+                                                <i class="fas fa-check-circle text-success me-2"></i>{{ skill.strip() }}
+                                            </li>
+                                        {% endif %}
+                                    {% endfor %}
+                                </ul>
+                            </div>
+                        </div>
+                        
+                        <div class="job-section">
+                            <h5><i class="fas fa-building me-2"></i>Company Information</h5>
+                            <div class="company-info-mobile">
+                                <div class="info-item mb-2">
+                                    <i class="fas fa-building me-2 text-primary"></i>
+                                    <strong>Company:</strong> {{ job.company }}
+                                </div>
+                                {% if job.location %}
+                                <div class="info-item mb-2">
+                                    <i class="fas fa-map-marker-alt me-2 text-primary"></i>
+                                    <strong>Location:</strong> {{ job.location }}
+                                </div>
+                                {% endif %}
+                                {% if job.salary %}
+                                <div class="info-item mb-2">
+                                    <strong>Salary:</strong> ₹{{ job.salary }}
+                                </div>
+                                {% endif %}
+                                <div class="info-item mb-2">
+                                    <i class="fas fa-briefcase me-2 text-primary"></i>
+                                    <strong>Type:</strong> {{ job.category.title() }}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Desktop View -->
+                    <div class="d-none d-lg-block">
+                        <div class="job-section">
+                            <h5><i class="fas fa-file-alt me-2"></i>Job Description</h5>
+                            <div class="job-description">
+                                {{ job.description | replace('\n', '<br>') | safe }}
+                            </div>
+                        </div>
+
+                        <div class="job-section">
+                            <h5><i class="fas fa-cogs me-2"></i>Required Skills & Qualifications</h5>
+                            <div class="skills-list">
+                                {% set skills_lines = job.skills.split('\n') %}
+                                <ul class="list-unstyled">
+                                    {% for skill in skills_lines %}
+                                        {% if skill.strip() %}
+                                            <li class="mb-2">
+                                                <i class="fas fa-check-circle text-success me-2"></i>{{ skill.strip() }}
+                                            </li>
+                                        {% endif %}
+                                    {% endfor %}
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="job-section">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div class="text-muted">
+                                <i class="fas fa-calendar me-2"></i>
+                                <small>Posted on {{ job.created_at.strftime('%B %d, %Y') }}</small>
+                            </div>
+                            <div class="text-muted">
+                                <i class="fas fa-users me-2"></i>
+                                <small>{{ job.applications|length }} Applications</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-4 d-none d-lg-block">
+            <div class="card apply-card" style="position: sticky; top: 100px;">
+                <div class="card-body">
+                    <i class="fas fa-paper-plane fa-3x mb-3"></i>
+                    <h5 class="card-title">Ready to Apply?</h5>
+                    <p class="card-text">Take the next step in your career journey</p>
+                    <button type="button" class="btn btn-light btn-lg btn-mobile" data-bs-toggle="modal" data-bs-target="#applyModal" onclick="setApplyForm({{ job.id }})">
+                        <i class="fas fa-rocket me-2"></i>Apply Now
+                    </button>
+                </div>
+            </div>
+            
+            <div class="card mt-4">
+                <div class="card-body">
+                    <h6 class="card-title">
+                        <i class="fas fa-info-circle me-2 text-primary"></i>Company Information
+                    </h6>
+                    <div class="company-info">
+                        <div class="info-item mb-2">
+                            <i class="fas fa-building me-2 text-muted"></i>
+                            <strong>Company:</strong> {{ job.company }}
+                        </div>
+                        {% if job.location %}
+                        <div class="info-item mb-2">
+                            <i class="fas fa-map-marker-alt me-2 text-muted"></i>
+                            <strong>Location:</strong> {{ job.location }}
+                        </div>
+                        {% endif %}
+                        {% if job.salary %}
+                        <div class="info-item mb-2">
+                            <strong>Salary:</strong> ₹{{ job.salary }}
+                        </div>
+                        {% endif %}
+                        <div class="info-item">
+                            <i class="fas fa-briefcase me-2 text-muted"></i>
+                            <strong>Type:</strong> {{ job.category.title() }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Floating Apply Button for Mobile -->
+<div class="floating-apply d-lg-none">
+    <button type="button" class="btn btn-primary btn-mobile" data-bs-toggle="modal" data-bs-target="#applyModal" onclick="setApplyForm({{ job.id }})">
+        <i class="fas fa-rocket me-2"></i>Apply Now
+    </button>
+</div>
+
+<script>
+function setApplyForm(jobId) {
+    document.getElementById('applyForm').action = '/apply/' + jobId;
+}
+
+function shareJob(platform) {
+    const url = window.location.href;
+    const title = '{{ job.title }} at {{ job.company }}';
+    
+    if (platform === 'linkedin') {
+        window.open(`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(url)}`);
+    } else if (platform === 'twitter') {
+        window.open(`https://twitter.com/intent/tweet?url=${encodeURIComponent(url)}&text=${encodeURIComponent(title)}`);
+    }
+}
+
+function copyJobLink() {
+    navigator.clipboard.writeText(window.location.href).then(() => {
+        alert('Job link copied to clipboard!');
+    });
+}
+</script>
+{% endblock %}

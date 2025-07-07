@@ -1,0 +1,14 @@
+[Unit]
+Description=Job Portal Flask App
+After=network.target
+
+[Service]
+User=www-data
+WorkingDirectory=/var/www/job_portal
+Environment=DATABASE_URL=postgresql://job_portal_user:your_password@localhost/job_portal
+Environment=SECRET_KEY=your-secret-key
+ExecStart=/usr/bin/python3 app.py
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
